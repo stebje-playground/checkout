@@ -1181,7 +1181,7 @@ const urlHelper = __importStar(__nccwpck_require__(9437));
 const git_command_manager_1 = __nccwpck_require__(738);
 function getSource(settings) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
+        var _a;
         // Repository URL
         core.info(`Syncing repository: ${settings.repositoryOwner}/${settings.repositoryName}`);
         const repositoryUrl = urlHelper.getFetchUrl(settings);
@@ -1207,12 +1207,17 @@ function getSource(settings) {
                     // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
                     // Otherwise all git commands we run in a container fail
                     yield authHelper.configureTempGlobalConfig();
-                    core.info(`Adding repository directory to the temporary git global config as a safe directory`);
-                    yield git
-                        .config('safe.directory', settings.repositoryPath, true, true)
-                        .catch(error => {
-                        core.info(`Failed to initialize safe directory with error: ${error}`);
-                    });
+                    /* core.info(
+                      `Adding repository directory to the temporary git global config as a safe directory`
+                    )
+            
+                    await git
+                      .config('safe.directory', settings.repositoryPath, true, true)
+                      .catch(error => {
+                        core.info(
+                          `Failed to initialize safe directory with error: ${error}`
+                        )
+                      }) */
                     // Add these lines to also set system-level and repo-level configurations
                     try {
                         core.info(`Adding repository as safe directory to system git config for container compatibility`);
@@ -1221,13 +1226,12 @@ function getSource(settings) {
                     catch (error) {
                         core.warning(`Unable to set system git config: ${(_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : error}. This may affect container jobs.`);
                     }
-                    try {
-                        core.info(`Adding repository as safe directory to repo git config for container compatibility`);
-                        yield git.config('safe.directory', settings.repositoryPath, false, true);
-                    }
-                    catch (error) {
-                        core.debug(`Unable to set local git config: ${(_b = error === null || error === void 0 ? void 0 : error.message) !== null && _b !== void 0 ? _b : error}`);
-                    }
+                    /* try {
+                      core.info(`Adding repository as safe directory to repo git config for container compatibility`)
+                      await git.config('safe.directory', settings.repositoryPath, false, true)
+                    } catch (error) {
+                      core.debug(`Unable to set local git config: ${(error as any)?.message ?? error}`)
+                    } */
                     stateHelper.setSafeDirectory();
                 }
             }

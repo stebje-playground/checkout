@@ -48,7 +48,7 @@ export async function getSource(settings: IGitSourceSettings): Promise<void> {
         // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
         // Otherwise all git commands we run in a container fail
         await authHelper.configureTempGlobalConfig()
-        core.info(
+        /* core.info(
           `Adding repository directory to the temporary git global config as a safe directory`
         )
 
@@ -58,7 +58,7 @@ export async function getSource(settings: IGitSourceSettings): Promise<void> {
             core.info(
               `Failed to initialize safe directory with error: ${error}`
             )
-          })
+          }) */
 
         // Add these lines to also set system-level and repo-level configurations
         try {
@@ -68,12 +68,12 @@ export async function getSource(settings: IGitSourceSettings): Promise<void> {
           core.warning(`Unable to set system git config: ${(error as any)?.message ?? error}. This may affect container jobs.`)
         }
         
-        try {
+        /* try {
           core.info(`Adding repository as safe directory to repo git config for container compatibility`)
           await git.config('safe.directory', settings.repositoryPath, false, true)
         } catch (error) {
           core.debug(`Unable to set local git config: ${(error as any)?.message ?? error}`)
-        }
+        } */
 
         stateHelper.setSafeDirectory()
       }
