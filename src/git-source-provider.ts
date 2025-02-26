@@ -315,7 +315,7 @@ export async function cleanup(repositoryPath: string): Promise<void> {
       // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
       // Otherwise all git commands we run in a container fail
       await authHelper.configureTempGlobalConfig()
-      core.info(
+      /* core.info(
         `Adding repository directory to the temporary git global config as a safe directory`
       )
 
@@ -323,10 +323,13 @@ export async function cleanup(repositoryPath: string): Promise<void> {
         .config('safe.directory', repositoryPath, true, true)
         .catch(error => {
           core.info(`Failed to initialize safe directory with error: ${error}`)
-        })
+        }) */
       
       core.info(`Adding repository as safe directory to system git config for container compatibility`)
       await exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath])
+
+      core.info(`Adding repository as safe directory to repo git config for container compatibility`)
+      await git.config('safe.directory', repositoryPath, false, true)
     }
 
     await authHelper.removeAuth()
