@@ -1181,6 +1181,7 @@ const urlHelper = __importStar(__nccwpck_require__(9437));
 const git_command_manager_1 = __nccwpck_require__(738);
 function getSource(settings) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         // Repository URL
         core.info(`Syncing repository: ${settings.repositoryOwner}/${settings.repositoryName}`);
         const repositoryUrl = urlHelper.getFetchUrl(settings);
@@ -1212,6 +1213,21 @@ function getSource(settings) {
                         .catch(error => {
                         core.info(`Failed to initialize safe directory with error: ${error}`);
                     });
+                    // Add these lines to also set system-level and repo-level configurations
+                    try {
+                        core.info(`Adding repository as safe directory to system git config for container compatibility`);
+                        yield exec.exec('git', ['config', '--system', '--add', 'safe.directory', settings.repositoryPath]);
+                    }
+                    catch (error) {
+                        core.warning(`Unable to set system git config: ${(_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : error}. This may affect container jobs.`);
+                    }
+                    try {
+                        core.info(`Adding repository as safe directory to repo git config for container compatibility`);
+                        yield git.config('safe.directory', settings.repositoryPath, false, true);
+                    }
+                    catch (error) {
+                        core.debug(`Unable to set local git config: ${(_b = error === null || error === void 0 ? void 0 : error.message) !== null && _b !== void 0 ? _b : error}`);
+                    }
                     stateHelper.setSafeDirectory();
                 }
             }
@@ -1399,10 +1415,6 @@ function cleanup(repositoryPath) {
                     .catch(error => {
                     core.info(`Failed to initialize safe directory with error: ${error}`);
                 });
-                core.info(`Adding repository as safe directory to system git config for container compatibility`);
-                yield exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath]);
-                core.info(`Adding repository as safe directory to repo git config for container compatibility`);
-                yield git.config('safe.directory', repositoryPath, false, true);
             }
             yield authHelper.removeAuth();
         }

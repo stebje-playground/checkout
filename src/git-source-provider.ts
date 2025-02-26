@@ -60,6 +60,21 @@ export async function getSource(settings: IGitSourceSettings): Promise<void> {
             )
           })
 
+        // Add these lines to also set system-level and repo-level configurations
+        try {
+          core.info(`Adding repository as safe directory to system git config for container compatibility`)
+          await exec.exec('git', ['config', '--system', '--add', 'safe.directory', settings.repositoryPath])
+        } catch (error) {
+          core.warning(`Unable to set system git config: ${(error as any)?.message ?? error}. This may affect container jobs.`)
+        }
+        
+        try {
+          core.info(`Adding repository as safe directory to repo git config for container compatibility`)
+          await git.config('safe.directory', settings.repositoryPath, false, true)
+        } catch (error) {
+          core.debug(`Unable to set local git config: ${(error as any)?.message ?? error}`)
+        }
+
         stateHelper.setSafeDirectory()
       }
     }
@@ -323,13 +338,7 @@ export async function cleanup(repositoryPath: string): Promise<void> {
         .config('safe.directory', repositoryPath, true, true)
         .catch(error => {
           core.info(`Failed to initialize safe directory with error: ${error}`)
-        })
-      
-      core.info(`Adding repository as safe directory to system git config for container compatibility`)
-      await exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath])
-
-      core.info(`Adding repository as safe directory to repo git config for container compatibility`)
-      await git.config('safe.directory', repositoryPath, false, true)
+        })      
     }
 
     await authHelper.removeAuth()
