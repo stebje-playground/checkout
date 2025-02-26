@@ -1393,15 +1393,12 @@ function cleanup(repositoryPath) {
                 // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
                 // Otherwise all git commands we run in a container fail
                 yield authHelper.configureTempGlobalConfig();
-                /* core.info(
-                  `Adding repository directory to the temporary git global config as a safe directory`
-                )
-          
-                await git
-                  .config('safe.directory', repositoryPath, true, true)
-                  .catch(error => {
-                    core.info(`Failed to initialize safe directory with error: ${error}`)
-                  }) */
+                core.info(`Adding repository directory to the temporary git global config as a safe directory`);
+                yield git
+                    .config('safe.directory', repositoryPath, true, true)
+                    .catch(error => {
+                    core.info(`Failed to initialize safe directory with error: ${error}`);
+                });
                 core.info(`Adding repository as safe directory to system git config for container compatibility`);
                 yield exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath]);
                 core.info(`Adding repository as safe directory to repo git config for container compatibility`);
