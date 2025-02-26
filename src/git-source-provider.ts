@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import * as exec from '@actions/exec'
 import * as fsHelper from './fs-helper'
 import * as gitAuthHelper from './git-auth-helper'
 import * as gitCommandManager from './git-command-manager'
@@ -323,6 +324,9 @@ export async function cleanup(repositoryPath: string): Promise<void> {
         .catch(error => {
           core.info(`Failed to initialize safe directory with error: ${error}`)
         })
+      
+      core.info(`Adding repository as safe directory to system git config for container compatibility`)
+      await exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath])
     }
 
     await authHelper.removeAuth()

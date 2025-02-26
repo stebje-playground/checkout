@@ -1167,6 +1167,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getSource = getSource;
 exports.cleanup = cleanup;
 const core = __importStar(__nccwpck_require__(2186));
+const exec = __importStar(__nccwpck_require__(1514));
 const fsHelper = __importStar(__nccwpck_require__(7219));
 const gitAuthHelper = __importStar(__nccwpck_require__(2565));
 const gitCommandManager = __importStar(__nccwpck_require__(738));
@@ -1398,6 +1399,8 @@ function cleanup(repositoryPath) {
                     .catch(error => {
                     core.info(`Failed to initialize safe directory with error: ${error}`);
                 });
+                core.info(`Adding repository as safe directory to system git config for container compatibility`);
+                yield exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath]);
             }
             yield authHelper.removeAuth();
         }
