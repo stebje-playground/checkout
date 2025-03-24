@@ -48,33 +48,22 @@ export async function getSource(settings: IGitSourceSettings): Promise<void> {
         // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
         // Otherwise all git commands we run in a container fail
         await authHelper.configureTempGlobalConfig()
-        /* core.info(
-          `Adding repository directory to the temporary git global config as a safe directory`
-        )
 
-        await git
-          .config('safe.directory', settings.repositoryPath, true, true)
-          .catch(error => {
-            core.info(
-              `Failed to initialize safe directory with error: ${error}`
-            )
-          }) */
-
-        // Add these lines to also set system-level and repo-level configurations
         try {
           core.info(`Adding repository as safe directory to system git config for container compatibility`)
           await exec.exec('git', ['config', '--system', '--add', 'safe.directory', settings.repositoryPath])
         } catch (error) {
-          core.warning(`Unable to set system git config: ${(error as any)?.message ?? error}. This may affect container jobs.`)
+          core.warning(`Failed to set system git config: ${error}`)
         }
         
-        /* try {
-          core.info(`Adding repository as safe directory to repo git config for container compatibility`)
-          await git.config('safe.directory', settings.repositoryPath, false, true)
-        } catch (error) {
-          core.debug(`Unable to set local git config: ${(error as any)?.message ?? error}`)
-        } */
-
+        // Also keep the global config for backward compatibility
+        core.info(`Adding repository directory to the temporary git global config as a safe directory`)
+        await git
+          .config('safe.directory', settings.repositoryPath, true, true)
+          .catch(error => {
+            core.info(`Failed to initialize safe directory with error: ${error}`)
+          })
+    
         stateHelper.setSafeDirectory()
       }
     }
@@ -329,6 +318,13 @@ export async function cleanup(repositoryPath: string): Promise<void> {
     if (stateHelper.PostSetSafeDirectory) {
       // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
       // Otherwise all git commands we run in a container fail
+      try {
+        core.info(`Adding repository as safe directory to system git config for container compatibility`)
+        await exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath])
+      } catch (error) {
+        core.warning(`Failed to set system git config: ${error}`)
+      }
+
       await authHelper.configureTempGlobalConfig()
       core.info(
         `Adding repository directory to the temporary git global config as a safe directory`
