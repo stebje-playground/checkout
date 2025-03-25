@@ -1203,22 +1203,22 @@ function getSource(settings) {
             if (git) {
                 authHelper = gitAuthHelper.createAuthHelper(git, settings);
                 if (settings.setSafeDirectory) {
-                    // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
-                    // Otherwise all git commands we run in a container fail
-                    yield authHelper.configureTempGlobalConfig();
-                    try {
-                        core.info(`Adding repository as safe directory to system git config for container compatibility`);
-                        yield exec.exec('git', ['config', '--system', '--add', 'safe.directory', settings.repositoryPath]);
-                    }
-                    catch (error) {
+                    // Setup the repository path as a safe directory.
+                    // We configure the safe directory as a --system and --global scope, the --system scope is required for container jobs.
+                    // For container jobs
+                    core.info(`Adding repository as safe directory to system git config for container compatibility`);
+                    yield exec
+                        .exec('git', ['config', '--system', '--add', 'safe.directory', settings.repositoryPath])
+                        .catch(error => {
                         core.warning(`Failed to set system git config: ${error}`);
-                    }
-                    // Also keep the global config for backward compatibility
+                    });
+                    // For non-container jobs
+                    yield authHelper.configureTempGlobalConfig();
                     core.info(`Adding repository directory to the temporary git global config as a safe directory`);
                     yield git
                         .config('safe.directory', settings.repositoryPath, true, true)
                         .catch(error => {
-                        core.info(`Failed to initialize safe directory with error: ${error}`);
+                        core.info(`Failed to set global git config: ${error}`);
                     });
                     stateHelper.setSafeDirectory();
                 }
@@ -1398,21 +1398,22 @@ function cleanup(repositoryPath) {
         const authHelper = gitAuthHelper.createAuthHelper(git);
         try {
             if (stateHelper.PostSetSafeDirectory) {
-                // Setup the repository path as a safe directory, so if we pass this into a container job with a different user it doesn't fail
-                // Otherwise all git commands we run in a container fail
-                try {
-                    core.info(`Adding repository as safe directory to system git config for container compatibility`);
-                    yield exec.exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath]);
-                }
-                catch (error) {
+                // Setup the repository path as a safe directory.
+                // We configure the safe directory as a --system and --global scope, the --system scope is required for container jobs.
+                // For container jobs
+                core.info(`Adding repository as safe directory to system git config for container compatibility`);
+                yield exec
+                    .exec('git', ['config', '--system', '--add', 'safe.directory', repositoryPath])
+                    .catch(error => {
                     core.warning(`Failed to set system git config: ${error}`);
-                }
+                });
+                // For non-container jobs
                 yield authHelper.configureTempGlobalConfig();
                 core.info(`Adding repository directory to the temporary git global config as a safe directory`);
                 yield git
                     .config('safe.directory', repositoryPath, true, true)
                     .catch(error => {
-                    core.info(`Failed to initialize safe directory with error: ${error}`);
+                    core.info(`Failed to set global git config: ${error}`);
                 });
             }
             yield authHelper.removeAuth();
